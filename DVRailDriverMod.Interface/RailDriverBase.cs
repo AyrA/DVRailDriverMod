@@ -2,6 +2,11 @@
 
 namespace DVRailDriverMod.Interface
 {
+    /// <summary>
+    /// Signature of the <see cref="RailDriverBase.RailDriverInputChange"/> event
+    /// </summary>
+    /// <param name="sender"><see cref="RailDriverBase"/> that caused the event</param>
+    /// <param name="eventArgs">Event arguments</param>
     public delegate void RailDriverInputChangeEventHandler(object sender, RailDriverEventArgs eventArgs);
 
     /// <summary>
@@ -9,6 +14,12 @@ namespace DVRailDriverMod.Interface
     /// </summary>
     public abstract class RailDriverBase
     {
+        /// <summary>
+        /// Gets the current controller instance
+        /// </summary>
+        /// <remarks>
+        /// This can be null if the mod has not loaded, or no controller was found.
+        /// </remarks>
         public static RailDriverBase Instance { get; protected set; }
 
         /// <summary>

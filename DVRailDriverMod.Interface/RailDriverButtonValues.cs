@@ -4,7 +4,7 @@ using System;
 namespace DVRailDriverMod.Interface
 {
     /// <summary>
-    /// Contains all button states of an RD controller
+    /// Contains the snapshot of all button states of an RD controller
     /// </summary>
     public class RailDriverButtonValues : ICloneable
     {
