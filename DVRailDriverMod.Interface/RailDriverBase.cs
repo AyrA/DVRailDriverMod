@@ -26,6 +26,17 @@ namespace DVRailDriverMod.Interface
         public bool IsDisplayInCustomMode { get; protected set; }
 
         /// <summary>
+        /// Gets the button state from the device
+        /// </summary>
+        /// <remarks>
+        /// It's usually better to use the <see cref="RailDriverInputChange"/> event.
+        /// The device updates states at most 4-5 times per second,
+        /// so calling this more often will not have any benefits
+        /// </remarks>
+        /// <returns>Button states</returns>
+        public abstract RailDriverButtonValues GetButtonStates();
+
+        /// <summary>
         /// Sets the given display text.
         /// Automatically scrolls the text if necessary
         /// </summary>

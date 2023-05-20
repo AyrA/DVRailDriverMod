@@ -70,6 +70,7 @@
     <Compile Include="RailDriverDevice\DeviceCalibration.cs" />
     <Compile Include="RailDriverDevice\LED.cs" />
     <Compile Include="RailDriverDevice\RDEventHandler.cs" />
+    <Compile Include="RailDriverFinder.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\DVRailDriverMod.Interface\DVRailDriverMod.Interface.csproj">

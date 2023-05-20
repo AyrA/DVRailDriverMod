@@ -10,9 +10,9 @@ namespace DVRailDriverMod.Interface
         public ButtonType ButtonType { get; set; }
         public RailDriverButtonValues ButtonValues { get; }
 
-        public RailDriverEventArgs()
+        public RailDriverEventArgs(RailDriverButtonValues values)
         {
-            ButtonValues = new RailDriverButtonValues();
+            ButtonValues = values;
             ButtonType = ButtonType.None;
             Cancel = false;
             Handled = false;

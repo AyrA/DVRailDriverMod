@@ -162,7 +162,7 @@ namespace DVRailDriverMod.RailDriverDevice
         internal LED(HID.HidPieDevice device)
         {
             Dev = device ?? throw new ArgumentNullException(nameof(device));
-            MarqueeDelay = 500;
+            MarqueeDelay = 300;
             new Thread(MarqueeThread) { IsBackground = true }.Start();
         }
 
@@ -305,9 +305,9 @@ namespace DVRailDriverMod.RailDriverDevice
         }
 
         /// <summary>
-        /// Sets up to 3 letters from the supplied string
+        /// Sets text string to display
         /// </summary>
-        /// <remarks>Use <see cref="SetMarquee(string, bool)"/> to set longer text strings</remarks>
+        /// <remarks>Automatically uses <see cref="SetMarquee(string, bool)"/> to set longer text strings</remarks>
         /// <param name="text">Text to show</param>
         /// <returns>True, if the command was sent</returns>
         public void SetText(string text)
@@ -325,9 +325,16 @@ namespace DVRailDriverMod.RailDriverDevice
             lastString = text;
             var Codes = MergeDot(text
                 .Select(GetLEDCode))
-                .Concat(new Segment[] { Segment.None, Segment.None, Segment.None })
                 .ToArray();
-            SetLED(Codes[0], Codes[1], Codes[2]);
+            if (Codes.Length < 4)
+            {
+                Codes = Codes.Concat(new Segment[] { Segment.None, Segment.None, Segment.None }).ToArray();
+                SetLED(Codes[0], Codes[1], Codes[2]);
+            }
+            else
+            {
+                SetMarquee(text, true);
+            }
         }
 
         /// <summary>
@@ -342,56 +349,40 @@ namespace DVRailDriverMod.RailDriverDevice
         /// <param name="d">Number</param>
         public void SetNumber(double d)
         {
-            if (d.ToString() == lastString)
-            {
-                return;
-            }
-            lastString = d.ToString();
-
             //Negative only works down to -99 because of the "-"
             if (d < -99.0)
             {
-                SetNumber(-99);
+                SetNumber(-99.0);
                 return;
             }
             //Positive numbers works up to 999
             if (d > 999.0)
             {
-                SetNumber(999);
+                SetNumber(999.0);
                 return;
             }
+
             //Add "NAN" support. Could also use zero instead
             if (double.IsNaN(d))
             {
                 SetText("NAN");
                 return;
             }
-            //At -10 we don't display decimals anymore
-            if (d <= -10)
+            //At -10 and less we don't display decimals anymore
+            if (d <= -10.0)
             {
                 SetText(Math.Round(d).ToString());
                 return;
             }
-            //At 100 we don't display decimals anymore
-            if (d >= 100)
+            //At 100 and more we don't display decimals anymore
+            if (d >= 100.0)
             {
                 SetText(Math.Round(d).ToString());
                 return;
             }
-            //Round number and set it
-            SetText(Math.Round(d).ToString());
-            /*
-            var numStr = Math.Round(d, Math.Abs(d) < 10.0 ? 2 : 1).ToString();
-            if (!numStr.Contains("."))
-            {
-                numStr += ".00";
-            }
-            else
-            {
-                numStr = (numStr + "000").Substring(0, 4);
-            }
-            SetText(numStr);
-            //*/
+            //Round number to a single digit and set it
+            var text = Math.Round(d, 1).ToString("#.0").PadLeft(4);
+            SetText(text);
         }
 
         /// <summary>

@@ -7,7 +7,14 @@ namespace DVRailDriverMod
 #endif
     public static class Main
     {
+        public static readonly RailDriverFinder finder;
+
         private static RailDriverAdapter adapter = null;
+
+        static Main()
+        {
+            finder = new RailDriverFinder();
+        }
 
         /// <summary>
         /// Loads the mod
@@ -18,8 +25,6 @@ namespace DVRailDriverMod
         {
             modEntry.OnToggle = OnToggle;
             modEntry.OnUnload = OnUnload;
-            //modEntry.OnGUI = OnGUI;
-            //modEntry.OnSaveGUI = OnSaveGUI;
             return true;
         }
 
@@ -47,12 +52,14 @@ namespace DVRailDriverMod
                 {
                     adapter = new RailDriverAdapter();
                     adapter.Start();
+                    finder.RailDriver = adapter;
                 }
             }
             else
             {
                 if (adapter != null)
                 {
+                    finder.RailDriver = null;
                     adapter.Stop();
                     adapter.Dispose();
                     adapter = null;

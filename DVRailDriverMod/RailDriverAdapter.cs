@@ -1,4 +1,5 @@
 ﻿using DVRailDriverMod.HID;
+using DVRailDriverMod.Interface;
 using DVRailDriverMod.Interface.Enums;
 using DVRailDriverMod.RailDriverDevice;
 using System;
@@ -8,7 +9,7 @@ using UnityEngine;
 
 namespace DVRailDriverMod
 {
-    public class RailDriverAdapter : IDisposable
+    public class RailDriverAdapter : RailDriverBase, IDisposable
     {
         private LocoControllerBase currentLoco = null;
         private TrainCar currentCar = null;
@@ -17,7 +18,7 @@ namespace DVRailDriverMod
         private Thread tUpdateLoop = null;
         private bool isEmergencyBrakeActive = false;
 
-        public void Start()
+        internal void Start()
         {
             if (dev != null)
             {
@@ -47,6 +48,7 @@ namespace DVRailDriverMod
                 {
                     Debug.LogError("Device could not be opened");
                 }
+                RailDriverInputChange += RailDriverValueChange;
                 PlayerManager.CarChanged += CarChanged;
                 tUpdateLoop = new Thread(UpdateLocoStates)
                 {
@@ -131,20 +133,20 @@ namespace DVRailDriverMod
             {
                 currentLoco = null;
             }
-            SetInitialValues(currentLoco);
+            ApplyRailDriverValues(currentLoco, lastValues);
         }
 
-        private void SetInitialValues(LocoControllerBase loco)
+        private void ApplyRailDriverValues(LocoControllerBase loco, RailDriverButtonValues values)
         {
-            if (dev.DPad != CrossButtons.None)
+            if (values.DPad != CrossButtons.None)
             {
                 //Camera
                 float offset = 0.0f;
-                if (dev.DPad.HasFlag(CrossButtons.Right))
+                if (values.DPad.HasFlag(CrossButtons.Right))
                 {
                     offset = 45f;
                 }
-                else if (dev.DPad.HasFlag(CrossButtons.Left))
+                else if (values.DPad.HasFlag(CrossButtons.Left))
                 {
                     offset = 315f;
                 }
@@ -161,11 +163,11 @@ namespace DVRailDriverMod
                 }
                 //Movement
                 float move = 0f;
-                if (dev.DPad.HasFlag(CrossButtons.Up))
+                if (values.DPad.HasFlag(CrossButtons.Up))
                 {
                     move = 1f;
                 }
-                else if (dev.DPad.HasFlag(CrossButtons.Down))
+                else if (values.DPad.HasFlag(CrossButtons.Down))
                 {
                     move = -1f;
                 }
@@ -189,13 +191,15 @@ namespace DVRailDriverMod
 
             var diesel = loco as LocoControllerDiesel;
             var shunter = loco as LocoControllerShunter;
+            var steamer = loco as LocoControllerSteam;
 
+            //Stuff below is for the locomotive, so we skip it if unnecessary
             if (loco == null)
             {
                 return;
             }
             //Switch
-            if (dev.ButtonsTop.HasFlag(RowButtons.Button13) || dev.ButtonsTop.HasFlag(RowButtons.Button14))
+            if (values.TopRowButtons.HasFlag(RowButtons.Button14))
             {
                 System.Diagnostics.Debug.Print("SWITCH: Attempting track switch");
                 var bogie = loco.train?.Bogies?.FirstOrDefault(m => !m.HasDerailed);
@@ -231,23 +235,23 @@ namespace DVRailDriverMod
                 }
                 else
                 {
-                    System.Diagnostics.Debug.Print("SWITCH: No track or bogie found");
+                    System.Diagnostics.Debug.Print("SWITCH: No track or bogie found. Loco derailed?");
                 }
 
             }
             //Sand
-            if (dev.AuxButtons.HasFlag(AuxButtons.Sand))
+            if (values.AuxButtons.HasFlag(AuxButtons.Sand))
             {
                 loco.SetSanders(loco.IsSandOn() ? 0.0f : 1.0f);
             }
             //Reverser
             if (loco.analogReverser)
             {
-                loco.SetReverser((float)dev.ParsedReverser);
+                loco.SetReverser((float)values.Reverser.ProcessedValue);
             }
             else
             {
-                switch (dev.TriStateReverser)
+                switch (values.TriStateReverser)
                 {
                     case ReverserPosition.Forward:
                         loco.SetReverser(1.0f);
@@ -261,7 +265,7 @@ namespace DVRailDriverMod
                 }
             }
             //Horn
-            if (dev.AuxButtons.HasFlag(AuxButtons.HornDown) || dev.AuxButtons.HasFlag(AuxButtons.HornUp))
+            if (values.AuxButtons.HasFlag(AuxButtons.HornDown) || values.AuxButtons.HasFlag(AuxButtons.HornUp))
             {
                 loco.UpdateHorn(1.0f);
             }
@@ -270,7 +274,7 @@ namespace DVRailDriverMod
                 loco.UpdateHorn(0.0f);
             }
             //Handle E-Brake
-            if (isEmergencyBrakeActive || dev.ParsedTrainBrake < 0.0 || dev.AuxButtons.HasFlag(AuxButtons.EUp) || dev.AuxButtons.HasFlag(AuxButtons.EDown))
+            if (isEmergencyBrakeActive || values.AutoBrake.ProcessedValue < 0.0 || values.AuxButtons.HasFlag(AuxButtons.EUp) || values.AuxButtons.HasFlag(AuxButtons.EDown))
             {
                 isEmergencyBrakeActive = true;
                 loco.SetThrottle(0.0f);
@@ -281,16 +285,16 @@ namespace DVRailDriverMod
             {
                 if (diesel != null || shunter != null)
                 {
-                    if (dev.ButtonsTop.HasFlag(RowButtons.Button1))
+                    if (values.TopRowButtons.HasFlag(RowButtons.Button1))
                     {
                         var running = diesel?.GetEngineRunning() ?? shunter?.GetEngineRunning() ?? false;
                         diesel?.SetEngineRunning(!running);
                         shunter?.SetEngineRunning(!running);
                     }
                 }
-                if (dev.ParsedThrottle >= 0.0)
+                if (values.Throttle.ProcessedValue >= 0.0)
                 {
-                    loco.SetThrottle((float)dev.ParsedThrottle);
+                    loco.SetThrottle((float)values.Throttle.ProcessedValue);
                     //Future version: Disable dynamic brake
                 }
                 else
@@ -298,17 +302,49 @@ namespace DVRailDriverMod
                     loco.SetThrottle(0.0f);
                     //Future version: Set dynamic brake value
                 }
-                loco.SetIndependentBrake((float)dev.ParsedIndBrake);
-                loco.SetBrake((float)dev.ParsedTrainBrake);
+                loco.SetIndependentBrake((float)values.IndependentBrake.ProcessedValue);
+                loco.SetBrake((float)values.AutoBrake.ProcessedValue);
             }
         }
 
         private void Dev_Input(Device sender, ButtonType buttonType)
         {
-            SetInitialValues(currentLoco);
+            var newValues = new RailDriverButtonValues()
+            {
+                AuxButtons = sender.AuxButtons,
+                BottomRowButtons = sender.ButtonsBottom,
+                DPad = sender.DPad,
+                TopRowButtons = sender.ButtonsTop,
+                UpDownButtons = sender.UpDown
+            };
+            newValues.AutoBrake.ProcessedValue = sender.ParsedTrainBrake;
+            newValues.AutoBrake.RawValue = sender.RawTrainBrake;
+
+            newValues.IndependentBrake.ProcessedValue = sender.ParsedIndBrake;
+            newValues.IndependentBrake.RawValue = sender.RawIndBrake;
+
+            newValues.Throttle.ProcessedValue = sender.ParsedThrottle;
+            newValues.Throttle.RawValue = sender.RawThrottle;
+
+            newValues.Reverser.ProcessedValue = sender.ParsedReverser;
+            newValues.Reverser.RawValue = sender.RawReverser;
+
+            newValues.Wiper.ProcessedValue = sender.ParsedWipers;
+            newValues.Wiper.RawValue = sender.RawWipers;
+
+            newValues.Lights.ProcessedValue = sender.ParsedLights;
+            newValues.Lights.RawValue = sender.RawLights;
+
+            lastValues = newValues;
+
+            var args = new RailDriverEventArgs(newValues)
+            {
+                ButtonType = buttonType
+            };
+            RailDriverInputChange(this, args);
         }
 
-        public void Stop()
+        internal void Stop()
         {
             if (dev != null)
             {
@@ -319,6 +355,7 @@ namespace DVRailDriverMod
                 dev.Dispose();
                 dev = null;
                 PlayerManager.CarChanged -= CarChanged;
+                RailDriverInputChange -= RailDriverValueChange;
             }
         }
 
@@ -326,5 +363,64 @@ namespace DVRailDriverMod
         {
             Stop();
         }
+
+        private void RailDriverValueChange(object sender, RailDriverEventArgs e)
+        {
+            if (e.Cancel || e.Handled)
+            {
+                return;
+            }
+            ApplyRailDriverValues(currentLoco, e.ButtonValues);
+        }
+
+        #region RailDriverBase
+
+        private RailDriverButtonValues lastValues = null;
+
+        public override event RailDriverInputChangeEventHandler RailDriverInputChange;
+
+        public override RailDriverButtonValues GetButtonStates()
+        {
+            return (RailDriverButtonValues)lastValues.Clone();
+        }
+
+        public override void SetDisplayContents(string text)
+        {
+            dev.LED.ClearMarquee();
+            if (string.IsNullOrEmpty(text))
+            {
+                IsDisplayInCustomMode = false;
+            }
+            else
+            {
+                IsDisplayInCustomMode = true;
+                dev.LED.SetText(text);
+            }
+        }
+
+        public override void SetDisplayContents(double number)
+        {
+            dev.LED.ClearMarquee();
+            IsDisplayInCustomMode = true;
+            dev.LED.SetNumber(number);
+        }
+
+        public override void SetDisplayContents(Segment left, Segment middle, Segment right)
+        {
+            IsDisplayInCustomMode = true;
+            dev.LED.SetLED(left, middle, right);
+        }
+
+        public override void SetDisplayScrollDelay(int ms)
+        {
+            dev.LED.MarqueeDelay = Math.Max(100, ms / 100 * 100);
+        }
+
+        public override void ResetDisplayBehavior()
+        {
+            IsDisplayInCustomMode = false;
+        }
+
+        #endregion
     }
 }
