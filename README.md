@@ -3,6 +3,8 @@
 This mod adds RailDriver integration into Derail Valley
 
 Instructions and details can be found in [the help site](https://help.ayra.ch/raildriver).
+There you find documentation about the mod as well as the key map,
+and at the bottom some extra information on the RailDriver device itself.
 
 This readme file here will mostly concern itself with how you extend the mod.
 
@@ -15,6 +17,7 @@ This includes:
 - Changing values of analog controls before they're passed to the internal processing function
 - Disable the internal processing function entirely
 - Mapping custom code to any button or analog control
+- Remapping buttons, incuding those used for internal functions
 
 ## How to Extend the Mod
 
@@ -23,8 +26,14 @@ This includes:
 *[click here](https://wiki.nexusmods.com/index.php/How_to_create_mod_for_unity_game)*
 *or look at the "Test Mod" project.*
 
+**TL;DR:** Start by fiddling around with the TestMod first (see below),
+and come back here if you have problems or want more information.
+
+----
+
 To access the RailDriver mod,
 add `DVRailDriverMod.Interface.dll` as a reference to your project.
+You find the DLL as part of the main mod.
 
 Use `DVRailDriverMod.Interface.RailDriverBase.Instance` to get access to the mod
 and interact with it. In most cases you want to attach to the `RailDriverInputChange` event.
@@ -95,10 +104,13 @@ The test project (see further down) demonstrates this.
 Note: Ensure whatever you do happens quickly.
 Doing long running tasks can overflow the hardware buffer
 and slows down other mods that want to interact with the RailDriver controller.
+Create a thread for potentially long running tasks,
+and make said thread deal with skipping event calls if it's too slow.
 
 Note: This event may be called multiple times in rapid succession.
 If the user changes multiple controls at once it may fire multiple times,
-once with the appropriate ButtonType argument set.
+each time with the appropriate ButtonType argument set,
+but every invocation will already have all updated values.
 
 The mod doesn't guarantees that there's actually a change in inputs.
 This means the event may be fired even though the state of the controls

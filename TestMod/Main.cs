@@ -117,29 +117,56 @@ namespace TestMod
             }
             else if (e.ButtonType == ButtonType.TopRow)
             {
-                //This shows how to suppress existing functionality without replacing it
+                //This shows how to suppress existing functionality without replacing it.
+                //It disables the start/stop functionality unless the "P" button is held down.
+                //When disabling the behavior it still leaves the start button in the pressed state,
+                //giving other mods the ability to use it for other purposes
                 if (b.TopRowButtons.HasFlag(RowButtons.Button1))
                 {
-                    e.Handled = true;
+                    e.Handled = b.AuxButtons.HasFlag(AuxButtons.P);
                 }
             }
+
+            var hasSand = b.AuxButtons.HasFlag(AuxButtons.Sand);
+            var hasAlert = b.AuxButtons.HasFlag(AuxButtons.Alert);
+            //This shows how to re-map buttons by swapping the sand and alert button
+            //If both buttons are pressed we do not need to swap them
+            if (hasSand != hasAlert)
+            {
+                if (hasSand)
+                {
+                    //Add alert and remove sand
+                    b.AuxButtons |= AuxButtons.Alert;
+                    b.AuxButtons &= ~AuxButtons.Sand;
+                }
+                if (hasAlert)
+                {
+                    //remove alert and add sand
+                    b.AuxButtons |= AuxButtons.Sand;
+                    b.AuxButtons &= ~AuxButtons.Alert;
+                }
+            }
+
+
             //This shows how to change built-in behavior.
             //- It limits the independent brake to half power
-            //- It disables all brake behavior via stop button and auto brake lever
+            //- It disables all emergency brake behavior via e-stop button and auto brake lever 'EMG' position
             //- It maps the bell button to the horn button because there's no functioning bell in the game yet
             //Note: It's not necessary to change the raw lever values. They're for informational purposes only.
             b.IndependentBrake.ProcessedValue = Math.Min(0.5f, b.IndependentBrake.ProcessedValue);
+
+            //emergency setting is negative
             if (b.AutoBrake.ProcessedValue < 0.0)
             {
                 b.AutoBrake.ProcessedValue = 1.0;
             }
+            //When bell is held, add horn
             if (b.AuxButtons.HasFlag(AuxButtons.Bell))
             {
                 b.AuxButtons |= AuxButtons.HornUp;
-                b.AuxButtons &= ~AuxButtons.Bell;
             }
-            b.AuxButtons &= ~AuxButtons.EUp;
-            b.AuxButtons &= ~AuxButtons.EDown;
+            //Completely disable E-Stop button
+            b.AuxButtons &= ~(AuxButtons.EUp | AuxButtons.EDown);
             //Note: We do not set the e.Handled or e.Cancel property here.
             //This causes the internal RD mod mechanism to continue working, but with our changed values
         }
