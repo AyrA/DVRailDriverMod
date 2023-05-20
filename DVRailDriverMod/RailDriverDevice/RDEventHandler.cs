@@ -1,6 +1,5 @@
 ﻿using DVRailDriverMod.Interface.Enums;
 using System;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 
@@ -97,6 +96,8 @@ namespace DVRailDriverMod.RailDriverDevice
         public AuxButtons Auxiliary { get; private set; }
 
         private Thread dataReader;
+        private CancellationTokenSource source = new CancellationTokenSource();
+
 
         /// <summary>
         /// Creates a new instance
@@ -135,6 +136,7 @@ namespace DVRailDriverMod.RailDriverDevice
         {
             var r = dataReader;
             dataReader = null;
+            source.Cancel();
             r?.Join();
         }
 
@@ -149,22 +151,22 @@ namespace DVRailDriverMod.RailDriverDevice
             //Don't read data on error
             if (error != 0)
             {
-                Debug.Print("Got Device Error={0}", error);
+                Logging.LogDebug("Got Device Error={0}", error);
                 return;
             }
             //Failed read
             if (data == null || data.Length != sourceDevice.DeviceInfo.ReadSize)
             {
-                Debug.Print("data parameter size not valid");
+                Logging.LogDebug("data parameter size not valid");
                 return;
             }
             if (data[0] != READ_START || data[data.Length - 1] != READ_END)
             {
-                Debug.Print("data parameter doesn't contains valid start and stop bytes");
+                Logging.LogDebug("data parameter doesn't contains valid start and stop bytes");
                 return;
             }
 
-            Debug.Print("Data={0}; Err=0x{1:X8}", string.Join("-", data.Select(m => m.ToString("X2"))), error);
+            Logging.LogDebug("Data={0}", string.Join("-", data.Select(m => m.ToString("X2"))));
 
             //Process each analog value byte and raise events when values change
             if (Reverser != data[1])
@@ -234,14 +236,26 @@ namespace DVRailDriverMod.RailDriverDevice
                 Auxiliary = aux;
                 ButtonChange(this, ButtonType.Aux);
             }
+
+            Logging.LogDebug("Input event processing complete in {0}", nameof(RDEventHandler));
         }
 
         private void DeviceReader()
         {
+            Logging.LogDebug("Starting device reader thread");
+            source = new CancellationTokenSource();
             while (dataReader != null)
             {
-                HandlePIEHidData(device.ReadData(), device, 0);
+                try
+                {
+                    HandlePIEHidData(device.ReadData(source.Token), device, 0);
+                }
+                catch (Exception ex)
+                {
+                    Logging.LogException(ex, "Error in device reader thread");
+                }
             }
+            Logging.LogDebug("Device reader set to null. Exiting reader thread.");
         }
 
         /// <summary>

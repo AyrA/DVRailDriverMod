@@ -9,6 +9,8 @@ namespace DVRailDriverMod.Interface
     /// </summary>
     public abstract class RailDriverBase
     {
+        public RailDriverBase Instance { get; protected set; }
+
         /// <summary>
         /// Event that is fired whenever the control values on the RD controller change
         /// </summary>

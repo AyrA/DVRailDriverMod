@@ -22,23 +22,27 @@ namespace DVRailDriverMod
         {
             if (dev != null)
             {
+                Logging.LogWarning($"{nameof(RailDriverAdapter)}: Already started");
                 return;
             }
-            Debug.LogWarning($"{nameof(RailDriverAdapter)}: Started");
+            Logging.LogInfo($"{nameof(RailDriverAdapter)}: Started");
             var devices = HidPieDeviceFinder.FindPieDevices();
-            Debug.LogWarning(string.Join("\n", devices.Select(m => m.Path)));
             if (devices.Length > 0)
             {
+                foreach (var device in devices)
+                {
+                    Logging.LogInfo("Device found: {0}", device.Path);
+                }
                 dev = new Device(DeviceCalibration.GetCalibrationData());
                 dev.Input += Dev_Input;
                 try
                 {
                     dev.Start();
-                    Debug.LogWarning("Device is open");
+                    Logging.LogWarning("Device is open");
                 }
                 catch (Exception ex)
                 {
-                    Debug.LogWarning("Unable to open the device: " + ex.Message);
+                    Logging.LogException(ex, "Unable to open the device: {0}", devices[0].Path);
                 }
                 if (dev.IsOpen)
                 {
@@ -46,15 +50,19 @@ namespace DVRailDriverMod
                 }
                 else
                 {
-                    Debug.LogError("Device could not be opened");
+                    Logging.LogError("Device could not be opened: {0}", devices[0].Path);
                 }
-                RailDriverInputChange += RailDriverValueChange;
                 PlayerManager.CarChanged += CarChanged;
                 tUpdateLoop = new Thread(UpdateLocoStates)
                 {
                     IsBackground = true
                 };
                 tUpdateLoop.Start();
+                Instance = this;
+            }
+            else
+            {
+                Logging.LogWarning("No RailDriver detected.");
             }
         }
 
@@ -119,25 +127,61 @@ namespace DVRailDriverMod
             currentCar = obj;
             if (obj.TryGetComponent(out LocoControllerShunter shunter))
             {
+                Logging.LogInfo("User entered shunter ID={0}", obj.ID);
                 currentLoco = shunter;
             }
             else if (obj.TryGetComponent(out LocoControllerDiesel diesel))
             {
+                Logging.LogInfo("User entered diesel ID={0}", obj.ID);
                 currentLoco = diesel;
             }
             else if (obj.TryGetComponent(out LocoControllerSteam steam))
             {
+                Logging.LogInfo("User entered steamer ID={0}", obj.ID);
                 currentLoco = steam;
             }
             else
             {
+                Logging.LogInfo("User on car ID={0}", obj.ID);
                 currentLoco = null;
             }
-            ApplyRailDriverValues(currentLoco, lastValues);
+            ProcessInputEvent(ButtonType.None);
+        }
+
+        private void ProcessInputEvent(ButtonType buttonType)
+        {
+            var args = new RailDriverEventArgs(lastValues)
+            {
+                ButtonType = buttonType
+            };
+            try
+            {
+                RailDriverInputChange?.Invoke(this, args);
+            }
+            catch (Exception ex)
+            {
+                Logging.LogException(ex, "3rd party exception during {0} event", nameof(RailDriverInputChange));
+            }
+            if (!args.Cancel && !args.Handled)
+            {
+                Logging.LogDebug("Event not handled by other mods. Use internal handling");
+                ApplyRailDriverValues(currentLoco, lastValues);
+            }
+            else
+            {
+                Logging.LogDebug("Event handled by other mods. Skipping over internal handling");
+            }
         }
 
         private void ApplyRailDriverValues(LocoControllerBase loco, RailDriverButtonValues values)
         {
+            //Happens if there are not any RD values from the controller.
+            //This is the case until the device is used for the first time
+            if (values == null)
+            {
+                Logging.LogDebug("RD has not yet sent any values");
+                return;
+            }
             if (values.DPad != CrossButtons.None)
             {
                 //Camera
@@ -201,41 +245,41 @@ namespace DVRailDriverMod
             //Switch
             if (values.TopRowButtons.HasFlag(RowButtons.Button14))
             {
-                System.Diagnostics.Debug.Print("SWITCH: Attempting track switch");
+                Logging.LogInfo("SWITCH: Attempting track switch");
                 var bogie = loco.train?.Bogies?.FirstOrDefault(m => !m.HasDerailed);
                 if (bogie?.track != null)
                 {
-                    System.Diagnostics.Debug.Print("SWITCH: Trying to find closest junction");
+                    Logging.LogInfo("SWITCH: Trying to find closest junction");
                     var junction = bogie.track.FindClosestJunction(bogie.gameObject.transform.position, 100f);
                     if (junction != null)
                     {
                         if (bogie.track != junction.inBranch?.track)
                         {
-                            System.Diagnostics.Debug.Print("SWITCH: Wrong side of junction {0:X8}", junction.GetInstanceID());
+                            Logging.LogInfo("SWITCH: Wrong side of junction {0:X8}", junction.GetInstanceID());
                         }
                         else
                         {
                             try
                             {
                                 junction.Switch(Junction.SwitchMode.REGULAR);
-                                System.Diagnostics.Debug.Print("SWITCH: Sent switch command to junction {0:X8}", junction.GetInstanceID());
+                                Logging.LogInfo("SWITCH: Sent switch command to junction {0:X8}", junction.GetInstanceID());
                             }
                             catch (Exception ex)
                             {
                                 //Cannot switch this for some reason
-                                System.Diagnostics.Debug.Print("SWITCH: Cannot switch junction {0:X8}", junction.GetInstanceID());
-                                System.Diagnostics.Debug.Print("SWITCH: {0}", ex.Message);
+                                Logging.LogInfo("SWITCH: Cannot switch junction {0:X8}", junction.GetInstanceID());
+                                Logging.LogInfo("SWITCH: {0}", ex.Message);
                             }
                         }
                     }
                     else
                     {
-                        System.Diagnostics.Debug.Print("SWITCH: No junction found");
+                        Logging.LogInfo("SWITCH: No junction found");
                     }
                 }
                 else
                 {
-                    System.Diagnostics.Debug.Print("SWITCH: No track or bogie found. Loco derailed?");
+                    Logging.LogInfo("SWITCH: No track or bogie found. Loco derailed?");
                 }
 
             }
@@ -309,14 +353,22 @@ namespace DVRailDriverMod
 
         private void Dev_Input(Device sender, ButtonType buttonType)
         {
+            if (sender == null)
+            {
+                Logging.LogDebug("Got invalid RD input event (sender is null)");
+                return;
+            }
+            Logging.LogDebug("Got RD input event");
             var newValues = new RailDriverButtonValues()
             {
                 AuxButtons = sender.AuxButtons,
                 BottomRowButtons = sender.ButtonsBottom,
-                DPad = sender.DPad,
                 TopRowButtons = sender.ButtonsTop,
-                UpDownButtons = sender.UpDown
+                DPad = sender.DPad,
+                UpDownButtons = sender.UpDown,
+                TriStateReverser = sender.TriStateReverser
             };
+
             newValues.AutoBrake.ProcessedValue = sender.ParsedTrainBrake;
             newValues.AutoBrake.RawValue = sender.RawTrainBrake;
 
@@ -336,32 +388,27 @@ namespace DVRailDriverMod
             newValues.Lights.RawValue = sender.RawLights;
 
             lastValues = newValues;
-
-            var args = new RailDriverEventArgs(newValues)
-            {
-                ButtonType = buttonType
-            };
-            RailDriverInputChange(this, args);
+            ProcessInputEvent(buttonType);
         }
 
         internal void Stop()
         {
             if (dev != null)
             {
-                Debug.LogWarning($"{nameof(RailDriverAdapter)}: Stopped");
+                Logging.LogInfo($"{nameof(RailDriverAdapter)}: Stopped");
                 var tSpeedOld = tUpdateLoop;
                 tUpdateLoop = null;
                 tSpeedOld.Join();
                 dev.Dispose();
                 dev = null;
                 PlayerManager.CarChanged -= CarChanged;
-                RailDriverInputChange -= RailDriverValueChange;
             }
         }
 
         public void Dispose()
         {
             Stop();
+            Instance = null;
         }
 
         private void RailDriverValueChange(object sender, RailDriverEventArgs e)

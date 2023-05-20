@@ -2,7 +2,9 @@
 using System;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Linq;
 using System.Runtime.InteropServices;
+using System.Threading;
 
 namespace DVRailDriverMod.HID
 {
@@ -11,7 +13,11 @@ namespace DVRailDriverMod.HID
         private SafeFileHandle hRead;
         private SafeFileHandle hWrite;
 
+        private byte[] lastInput;
+
         public readonly PieDeviceInformation DeviceInfo;
+
+        public bool SuppressIdenticalInputs { get; set; }
 
         public bool IsOpen =>
             hRead != null && hWrite != null &&
@@ -21,6 +27,7 @@ namespace DVRailDriverMod.HID
         public HidPieDevice(PieDeviceInformation info)
         {
             DeviceInfo = info ?? throw new ArgumentNullException(nameof(info));
+            lastInput = new byte[info.ReadSize];
         }
 
         public void WriteData(byte[] data)
@@ -53,25 +60,34 @@ namespace DVRailDriverMod.HID
             }
         }
 
-        public byte[] ReadData()
+        public byte[] ReadData(CancellationToken ct)
         {
             if (!IsOpen)
             {
                 throw new InvalidOperationException("Device not open");
             }
-            var buffer = Marshal.AllocHGlobal(DeviceInfo.ReadSize);
+            byte[] dest = new byte[DeviceInfo.ReadSize];
             int read = 0;
+            var buffer = Marshal.AllocHGlobal(DeviceInfo.ReadSize);
             try
             {
-                var ret = FileIOApiDeclarations.ReadFile(hRead, buffer, DeviceInfo.ReadSize, ref read, IntPtr.Zero);
-                Debug.Print("Read {0} bytes of {2}. Result was {1}", read, ret, DeviceInfo.ReadSize);
-                if (ret == 0)
+                do
                 {
-                    throw new Win32Exception();
-                }
-                var b = new byte[DeviceInfo.ReadSize];
-                Marshal.Copy(buffer, b, 0, DeviceInfo.ReadSize);
-                return b;
+                    var ret = FileIOApiDeclarations.ReadFile(hRead, buffer, DeviceInfo.ReadSize, ref read, IntPtr.Zero);
+                    Logging.LogDebug("Read {0} bytes of {2}. Result was {1}", read, ret, DeviceInfo.ReadSize);
+                    if (ret == 0)
+                    {
+                        throw new Win32Exception();
+                    }
+                    Marshal.Copy(buffer, dest, 0, DeviceInfo.ReadSize);
+                } while (!ct.IsCancellationRequested && SuppressIdenticalInputs && lastInput.SequenceEqual(dest));
+                lastInput = (byte[])dest.Clone();
+                return dest;
+            }
+            catch (ThreadAbortException)
+            {
+                //NOOP
+                return (byte[])lastInput.Clone();
             }
             finally
             {
@@ -115,13 +131,17 @@ namespace DVRailDriverMod.HID
         {
             if (hRead != null)
             {
-                hRead.Close();
-                hRead.Dispose();
+                using (hRead)
+                {
+                    hRead.Close();
+                }
             }
             if (hWrite != null)
             {
-                hWrite.Close();
-                hWrite.Dispose();
+                using (hWrite)
+                {
+                    hWrite.Close();
+                }
             }
             hRead = hWrite = null;
         }

@@ -178,7 +178,8 @@ namespace DVRailDriverMod.RailDriverDevice
             try
             {
                 device = new HID.HidPieDevice(HID.HidPieDeviceFinder.FindPieDevices().First());
-                LogDebug($"Using device '{device.DeviceInfo.Path}'");
+                device.SuppressIdenticalInputs = true;
+                Logging.LogInfo("Using device '{0}'", device.DeviceInfo.Path);
             }
             catch (Exception ex)
             {
@@ -200,7 +201,7 @@ namespace DVRailDriverMod.RailDriverDevice
             {
                 throw new InvalidOperationException("Device already started");
             }
-            LogDebug($"Device started: Path={device.DeviceInfo.Path}");
+            Logging.LogInfo("Device started: Path={0}", device.DeviceInfo.Path);
             device.Open();
             LED = new LED(device);
             handler = new RDEventHandler(device);
@@ -218,7 +219,7 @@ namespace DVRailDriverMod.RailDriverDevice
             {
                 throw NotStarted;
             }
-            LogDebug($"Setting speaker state to '{enabled}'");
+            Logging.LogInfo("Setting speaker state to '{0}'", enabled);
             var data = new byte[device.DeviceInfo.WriteSize];
             data[1] = SpeakerCommand;
             data[7] = (byte)(enabled ? 1 : 0);
@@ -234,13 +235,13 @@ namespace DVRailDriverMod.RailDriverDevice
             var l = LED;
             if (l != null)
             {
-                LogDebug("Disposing LED instance");
+                Logging.LogInfo("Disposing LED instance");
                 l.Dispose();
                 LED = null;
             }
             if (h != null)
             {
-                LogDebug("Disposing device handler instance");
+                Logging.LogInfo("Disposing device handler instance");
                 h.Dispose();
                 handler = null;
             }
@@ -254,14 +255,8 @@ namespace DVRailDriverMod.RailDriverDevice
         /// <param name="buttonType">Button value that changed</param>
         private void Handler_ButtonChange(RDEventHandler sender, ButtonType buttonType)
         {
-            LogDebug($"Got button event: {buttonType}");
+            Logging.LogDebug("Got button event for button '{0}'", buttonType);
             Input(this, buttonType);
-        }
-
-        private void LogDebug(string msg)
-        {
-            System.Diagnostics.Debug.Print(msg);
-            DebugLog(this, msg);
         }
     }
 }

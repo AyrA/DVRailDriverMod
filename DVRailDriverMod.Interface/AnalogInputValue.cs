@@ -7,6 +7,8 @@ namespace DVRailDriverMod.Interface
         public double ProcessedValue { get; set; }
         public byte RawValue { get; set; }
 
+        public AnalogInputValue() : this(0.0, 0) { }
+
         public AnalogInputValue(double processedValue, byte rawValue)
         {
             ProcessedValue = processedValue;

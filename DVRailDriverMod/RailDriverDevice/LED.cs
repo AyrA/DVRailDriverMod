@@ -381,7 +381,7 @@ namespace DVRailDriverMod.RailDriverDevice
                 return;
             }
             //Round number to a single digit and set it
-            var text = Math.Round(d, 1).ToString("#.0").PadLeft(4);
+            var text = Math.Round(d, 1).ToString("0.0").PadLeft(4);
             SetText(text);
         }
 
@@ -467,6 +467,7 @@ namespace DVRailDriverMod.RailDriverDevice
             while (Dev != null)
             {
                 Device = Dev;
+                //Multi threading guard
                 if (Device == null)
                 {
                     return;

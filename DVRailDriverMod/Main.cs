@@ -7,14 +7,7 @@ namespace DVRailDriverMod
 #endif
     public static class Main
     {
-        public static readonly RailDriverFinder finder;
-
         private static RailDriverAdapter adapter = null;
-
-        static Main()
-        {
-            finder = new RailDriverFinder();
-        }
 
         /// <summary>
         /// Loads the mod
@@ -23,6 +16,7 @@ namespace DVRailDriverMod
         /// <returns>true, if load succeeded</returns>
         public static bool Load(UnityModManager.ModEntry modEntry)
         {
+            Logging.LogInfo("Called {0} on {1}", nameof(Load), typeof(Main).FullName);
             modEntry.OnToggle = OnToggle;
             modEntry.OnUnload = OnUnload;
             return true;
@@ -35,6 +29,7 @@ namespace DVRailDriverMod
         /// <returns>true, if unloaded</returns>
         static bool OnUnload(UnityModManager.ModEntry modEntry)
         {
+            Logging.LogInfo("Called {0} on {1}", nameof(OnUnload), typeof(Main).FullName);
             return OnToggle(modEntry, false);
         }
 
@@ -46,23 +41,30 @@ namespace DVRailDriverMod
         /// <returns>true, if toggled</returns>
         static bool OnToggle(UnityModManager.ModEntry modEntry, bool value)
         {
+            Logging.LogInfo("Called {0}({2}) on {1}", nameof(OnToggle), typeof(Main).FullName, value);
             if (value)
             {
                 if (adapter == null)
                 {
                     adapter = new RailDriverAdapter();
                     adapter.Start();
-                    finder.RailDriver = adapter;
+                }
+                else
+                {
+                    Logging.LogWarning("RD adapter already loaded");
                 }
             }
             else
             {
                 if (adapter != null)
                 {
-                    finder.RailDriver = null;
                     adapter.Stop();
                     adapter.Dispose();
                     adapter = null;
+                }
+                else
+                {
+                    Logging.LogWarning("RD adapter already unloaded");
                 }
             }
             return true;

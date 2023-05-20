@@ -68,6 +68,16 @@ namespace DVRailDriverMod.Interface
         /// </summary>
         public AnalogInputValue Lights { get; private set; }
 
+        public RailDriverButtonValues()
+        {
+            Reverser = new AnalogInputValue();
+            Throttle = new AnalogInputValue();
+            AutoBrake = new AnalogInputValue();
+            IndependentBrake = new AnalogInputValue();
+            Wiper = new AnalogInputValue();
+            Lights = new AnalogInputValue();
+        }
+
         public object Clone()
         {
             var copy = (RailDriverButtonValues)MemberwiseClone();
