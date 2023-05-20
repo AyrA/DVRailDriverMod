@@ -177,6 +177,7 @@ namespace DVRailDriverMod.RailDriverDevice
                 MarqueeRepeat = false;
                 marqueeOffset = 0;
                 useLoader = false;
+                lastString = null;
             }
         }
 
@@ -278,6 +279,7 @@ namespace DVRailDriverMod.RailDriverDevice
         /// <summary>
         /// Clears all display segments
         /// </summary>
+        /// <remarks>This will not prevent animations from continuing. Use <see cref="ClearMarquee"/> for this purpose</remarks>
         public void ClearDisplay()
         {
             SetLED(Segment.None, Segment.None, Segment.None);
@@ -322,12 +324,13 @@ namespace DVRailDriverMod.RailDriverDevice
             {
                 return;
             }
-            lastString = text;
+            Logging.LogDebug("Setting LED to '{0}'", text);
             var Codes = MergeDot(text
                 .Select(GetLEDCode))
                 .ToArray();
             if (Codes.Length < 4)
             {
+                lastString = text;
                 Codes = Codes.Concat(new Segment[] { Segment.None, Segment.None, Segment.None }).ToArray();
                 SetLED(Codes[0], Codes[1], Codes[2]);
             }
@@ -401,17 +404,6 @@ namespace DVRailDriverMod.RailDriverDevice
             marqueeOffset = 0;
             MarqueeRepeat = Repeat;
             useLoader = true;
-        }
-
-        /// <summary>
-        /// Ends loader animation display
-        /// </summary>
-        public void EndLoader()
-        {
-            marqueeCode = null;
-            useLoader = false;
-            ClearDisplay();
-            lastString = null;
         }
 
         /// <summary>

@@ -84,27 +84,30 @@ namespace DVRailDriverMod
                             l.SetSanders(0.0f);
                             diesel?.SetEngineRunning(false);
                             shunter?.SetEngineRunning(false);
-                            d.LED.ClearMarquee();
+                            if (!IsDisplayInCustomMode)
+                            {
+                                d.LED.ClearMarquee();
+                            }
                         }
-                        else
+                        else if (!IsDisplayInCustomMode)
                         {
                             d.LED.SetMarquee("E-STOP", true);
                         }
                     }
-                    else if (l.IsDerailed())
+                    else if (!IsDisplayInCustomMode && l.IsDerailed())
                     {
                         d.LED.SetMarquee("DERAILED", true);
                     }
-                    else if (l.IsWheelslipping())
+                    else if (!IsDisplayInCustomMode && l.IsWheelslipping())
                     {
                         d.LED.SetText("SLP");
                     }
-                    else
+                    else if (!IsDisplayInCustomMode)
                     {
                         d.LED.SetNumber(l.GetSpeedKmH());
                     }
                 }
-                else
+                else if (!IsDisplayInCustomMode)
                 {
                     d.LED.SetText("OFF");
                 }
@@ -411,15 +414,6 @@ namespace DVRailDriverMod
             Instance = null;
         }
 
-        private void RailDriverValueChange(object sender, RailDriverEventArgs e)
-        {
-            if (e.Cancel || e.Handled)
-            {
-                return;
-            }
-            ApplyRailDriverValues(currentLoco, e.ButtonValues);
-        }
-
         #region RailDriverBase
 
         private RailDriverButtonValues lastValues = null;
@@ -465,6 +459,7 @@ namespace DVRailDriverMod
 
         public override void ResetDisplayBehavior()
         {
+            dev.LED.ClearMarquee();
             IsDisplayInCustomMode = false;
         }
 

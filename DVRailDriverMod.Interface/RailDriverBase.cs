@@ -9,7 +9,7 @@ namespace DVRailDriverMod.Interface
     /// </summary>
     public abstract class RailDriverBase
     {
-        public RailDriverBase Instance { get; protected set; }
+        public static RailDriverBase Instance { get; protected set; }
 
         /// <summary>
         /// Event that is fired whenever the control values on the RD controller change
@@ -42,7 +42,11 @@ namespace DVRailDriverMod.Interface
         /// Sets the given display text.
         /// Automatically scrolls the text if necessary
         /// </summary>
-        /// <param name="text"></param>
+        /// <remarks>
+        /// If the text is null or empty, the display reverts to the default behavior.
+        /// Instead, use 1-3 spaces to clear the display and leave it that way
+        /// </remarks>
+        /// <param name="text">Text to display</param>
         public abstract void SetDisplayContents(string text);
 
         /// <summary>

@@ -26,11 +26,6 @@ namespace DVRailDriverMod.RailDriverDevice
         public event Action<Device, ButtonType> Input = delegate { };
 
         /// <summary>
-        /// Event that is fired whenever a debug log message is generated
-        /// </summary>
-        public event Action<Device, string> DebugLog = delegate { };
-
-        /// <summary>
         /// Exception thrown for when <see cref="Start"/> has not been called yet
         /// </summary>
         private static InvalidOperationException NotStarted =>
@@ -44,7 +39,7 @@ namespace DVRailDriverMod.RailDriverDevice
         /// <summary>
         /// Sets display values
         /// </summary>
-        public LED LED { get; private set; }
+        internal LED LED { get; private set; }
 
         /// <summary>
         /// Gets if the device is open
@@ -177,8 +172,10 @@ namespace DVRailDriverMod.RailDriverDevice
             CalibrationData = data ?? new CalibrationData();
             try
             {
-                device = new HID.HidPieDevice(HID.HidPieDeviceFinder.FindPieDevices().First());
-                device.SuppressIdenticalInputs = true;
+                device = new HID.HidPieDevice(HID.HidPieDeviceFinder.FindPieDevices().First())
+                {
+                    SuppressIdenticalInputs = true
+                };
                 Logging.LogInfo("Using device '{0}'", device.DeviceInfo.Path);
             }
             catch (Exception ex)
