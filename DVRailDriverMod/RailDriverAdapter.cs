@@ -430,7 +430,7 @@ namespace DVRailDriverMod
             dev.LED.ClearMarquee();
             if (string.IsNullOrEmpty(text))
             {
-                IsDisplayInCustomMode = false;
+                ResetDisplayBehavior();
             }
             else
             {
@@ -460,6 +460,7 @@ namespace DVRailDriverMod
         public override void ResetDisplayBehavior()
         {
             dev.LED.ClearMarquee();
+            dev.LED.MarqueeDelay = 300;
             IsDisplayInCustomMode = false;
         }
 
