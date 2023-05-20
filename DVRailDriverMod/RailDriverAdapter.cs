@@ -449,6 +449,7 @@ namespace DVRailDriverMod
         public override void SetDisplayContents(Segment left, Segment middle, Segment right)
         {
             IsDisplayInCustomMode = true;
+            dev.LED.ClearMarquee();
             dev.LED.SetLED(left, middle, right);
         }
 
