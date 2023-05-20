@@ -49,8 +49,6 @@
     <Compile Include="Enums\RowButtons.cs" />
     <Compile Include="Enums\Segment.cs" />
     <Compile Include="Enums\UpDownButton.cs" />
-    <Compile Include="ICalibratedValue.cs" />
-    <Compile Include="IStreamSerializable.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RailDriverBase.cs" />
     <Compile Include="RailDriverButtonValues.cs" />
