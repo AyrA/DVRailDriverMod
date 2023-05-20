@@ -1,13 +1,13 @@
 ﻿using System;
 using System.IO;
 
-namespace DVRailDriverMod.Interface.Calibration
+namespace DVRailDriverMod.Calibration
 {
     /// <summary>
     /// Calibration data for buttons with 3 states
     /// </summary>
     /// <remarks>This currently is the wiper and lights button</remarks>
-    public class TriButtonCalibration : ICalibratedValue, IStreamSerializable
+    internal class TriButtonCalibration : ICalibratedValue, IStreamSerializable
     {
         /// <summary>
         /// Gets or sets the minimum button value

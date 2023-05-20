@@ -42,12 +42,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AnalogInputValue.cs" />
-    <Compile Include="Calibration\CalibrationData.cs" />
-    <Compile Include="Calibration\IndBrakeCalibration.cs" />
-    <Compile Include="Calibration\ReverserCalibration.cs" />
-    <Compile Include="Calibration\ThrottleCalibration.cs" />
-    <Compile Include="Calibration\TrainBrakeCalibration.cs" />
-    <Compile Include="Calibration\TriButtonCalibration.cs" />
     <Compile Include="Enums\AuxButtons.cs" />
     <Compile Include="Enums\ButtonType.cs" />
     <Compile Include="Enums\CrossButtons.cs" />

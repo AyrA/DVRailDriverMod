@@ -1,32 +1,24 @@
 ﻿using System.IO;
 
-namespace DVRailDriverMod.Interface.Calibration
+namespace DVRailDriverMod.Calibration
 {
     /// <summary>
-    /// Train brake calibration values
+    /// Calibration values for the independent brake lever
     /// </summary>
-    public class TrainBrakeCalibration : ICalibratedValue, IStreamSerializable
+    internal class IndBrakeCalibration : ICalibratedValue, IStreamSerializable
     {
         /// <summary>
-        /// Gets or sets the minimum brake value
+        /// Gets or sets the value for minimum brake application
         /// </summary>
-        public byte BrakeMin { get; set; } = 204;
+        public byte BrakeMin { get; set; } = 199;
         /// <summary>
-        /// Gets or sets the maximum brake value
+        /// Gets or sets the value for maximum brake application
         /// </summary>
-        public byte BrakeMax { get; set; } = 84;
-        /// <summary>
-        /// Gets or sets the emergency brake value
-        /// </summary>
-        public byte BrakeEmg { get; set; } = 70;
+        public byte BrakeMax { get; set; } = 37;
 
         /// <summary>
-        /// Gets or sets if the min brake value should be adjusted if the value is out of bounds
+        /// Allows changing <see cref="BrakeMin"/> and <see cref="BrakeMin"/> if the raw value is out of bounds
         /// </summary>
-        /// <remarks>
-        /// This will not adjust the maximum brake value
-        /// because it would render the <see cref="BrakeEmg"/> setting unreachable
-        /// </remarks>
         public bool AutoTune { get; set; } = false;
 
         public void Deserialize(Stream source)
@@ -35,21 +27,16 @@ namespace DVRailDriverMod.Interface.Calibration
             {
                 BrakeMin = BR.ReadByte();
                 BrakeMax = BR.ReadByte();
-                BrakeEmg = BR.ReadByte();
             }
         }
 
         /// <summary>
-        /// Gets the train brake value
+        /// Gets normalized value
         /// </summary>
-        /// <param name="value">Raw value</param>
-        /// <returns>Ranges from 0.0 (release) to 1.0 (full), or jumps to -1.0 if in emergency position</returns>
+        /// <param name="value">raw value</param>
+        /// <returns>0.0 (released) to 1.0 (full)</returns>
         public double GetValue(byte value)
         {
-            if (value < BrakeEmg)
-            {
-                return -1.0;
-            }
             if (value > BrakeMin)
             {
                 if (!AutoTune)
@@ -60,7 +47,11 @@ namespace DVRailDriverMod.Interface.Calibration
             }
             if (value < BrakeMax)
             {
-                return 1.0;
+                if (!AutoTune)
+                {
+                    return 1.0;
+                }
+                BrakeMax = value;
             }
             return 1.0 - ((value - BrakeMax) * 1.0 / (BrakeMin - BrakeMax));
         }
@@ -71,7 +62,6 @@ namespace DVRailDriverMod.Interface.Calibration
             {
                 BW.Write(BrakeMin);
                 BW.Write(BrakeMax);
-                BW.Write(BrakeEmg);
             }
         }
     }

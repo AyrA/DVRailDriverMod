@@ -57,6 +57,14 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Calibration\CalibrationData.cs" />
+    <Compile Include="Calibration\ICalibratedValue.cs" />
+    <Compile Include="Calibration\IndBrakeCalibration.cs" />
+    <Compile Include="Calibration\IStreamSerializable.cs" />
+    <Compile Include="Calibration\ReverserCalibration.cs" />
+    <Compile Include="Calibration\ThrottleCalibration.cs" />
+    <Compile Include="Calibration\TrainBrakeCalibration.cs" />
+    <Compile Include="Calibration\TriButtonCalibration.cs" />
     <Compile Include="HID\DeviceManagementApiDeclarations.cs" />
     <Compile Include="HID\FileIOApiDeclarations.cs" />
     <Compile Include="HID\HidApiDeclarations.cs" />

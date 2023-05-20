@@ -1,11 +1,11 @@
 ﻿using System.IO;
 
-namespace DVRailDriverMod.Interface.Calibration
+namespace DVRailDriverMod.Calibration
 {
     /// <summary>
     /// Calibration data for the reverser lever
     /// </summary>
-    public class ReverserCalibration : ICalibratedValue, IStreamSerializable
+    internal class ReverserCalibration : ICalibratedValue, IStreamSerializable
     {
         /// <summary>
         /// Gets or sets the reverse position

@@ -1,6 +1,6 @@
 ﻿using System.IO;
 
-namespace DVRailDriverMod.Interface.Calibration
+namespace DVRailDriverMod.Calibration
 {
     /// <summary>
     /// Calibration data for the throttle lever
@@ -9,7 +9,7 @@ namespace DVRailDriverMod.Interface.Calibration
     /// The throttle lever is special because it has a gate,
     /// and the entire gated area should be 0.0
     /// </remarks>
-    public class ThrottleCalibration : ICalibratedValue, IStreamSerializable
+    internal class ThrottleCalibration : ICalibratedValue, IStreamSerializable
     {
         /// <summary>
         /// Gets or sets the maximum throttle value

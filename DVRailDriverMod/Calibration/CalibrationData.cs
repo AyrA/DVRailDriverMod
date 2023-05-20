@@ -1,11 +1,11 @@
 ﻿using System.IO;
 
-namespace DVRailDriverMod.Interface.Calibration
+namespace DVRailDriverMod.Calibration
 {
     /// <summary>
     /// Represents calibration data used to turn raw device values into normalized values
     /// </summary>
-    public class CalibrationData : IStreamSerializable
+    internal class CalibrationData : IStreamSerializable
     {
         /// <summary>
         /// Order in which data is serialized and deserialized
