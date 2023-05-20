@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DVRailDriverMod", "DVRailDr
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DVRailDriverMod.Interface", "DVRailDriverMod.Interface\DVRailDriverMod.Interface.csproj", "{67B88333-84C3-41AF-9CE7-524302F28671}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestMod", "TestMod\TestMod.csproj", "{10AE9028-56AB-4AE9-9B84-BF2A1D41D237}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{67B88333-84C3-41AF-9CE7-524302F28671}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{67B88333-84C3-41AF-9CE7-524302F28671}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{67B88333-84C3-41AF-9CE7-524302F28671}.Release|Any CPU.Build.0 = Release|Any CPU
+		{10AE9028-56AB-4AE9-9B84-BF2A1D41D237}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{10AE9028-56AB-4AE9-9B84-BF2A1D41D237}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{10AE9028-56AB-4AE9-9B84-BF2A1D41D237}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{10AE9028-56AB-4AE9-9B84-BF2A1D41D237}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
