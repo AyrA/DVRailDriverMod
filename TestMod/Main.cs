@@ -1,8 +1,11 @@
 ﻿using DVRailDriverMod.Interface;
 using DVRailDriverMod.Interface.Enums;
 using System;
-using UnityEngine;
+using System.Diagnostics;
 using UnityModManagerNet;
+
+// This is an example mod that you can use as reference when writing your own mods,
+// or you can outright copy this to your own project
 
 namespace TestMod
 {
@@ -21,7 +24,7 @@ namespace TestMod
         public static bool Load(UnityModManager.ModEntry modEntry)
         {
             //For this simple mod, loading is the same as enabling
-            Debug.LogFormat("Called {0} on {1}", nameof(Load), typeof(Main).FullName);
+            Debug.Print("Called {0} on {1}", nameof(Load), typeof(Main).FullName);
             modEntry.OnToggle = OnToggle;
             modEntry.OnUnload = OnUnload;
             return true;
@@ -35,7 +38,7 @@ namespace TestMod
         static bool OnUnload(UnityModManager.ModEntry modEntry)
         {
             //For this simple mod, unloading is the same as disabling
-            Debug.LogFormat("Called {0} on {1}", nameof(OnUnload), typeof(Main).FullName);
+            Debug.Print("Called {0} on {1}", nameof(OnUnload), typeof(Main).FullName);
             return OnToggle(modEntry, false);
         }
 
@@ -47,7 +50,7 @@ namespace TestMod
         /// <returns>true, if enabnled, false if disabled</returns>
         static bool OnToggle(UnityModManager.ModEntry modEntry, bool value)
         {
-            Debug.LogFormat("Called {1}.{0}({2})", nameof(OnToggle), typeof(Main).FullName, value);
+            Debug.Print("Called {1}.{0}({2})", nameof(OnToggle), typeof(Main).FullName, value);
             if (value)
             {
                 if (adapter == null)
@@ -56,19 +59,20 @@ namespace TestMod
                     if (adapter != null)
                     {
                         adapter.RailDriverInputChange += OnInput;
-                        Debug.Log("RD adapter event hooked");
+                        Debug.Print("RD adapter event hooked");
                     }
                     else
                     {
-                        Debug.LogError("Expected DVRailDriverMod to be loaded but it's not. Aborting load operation now.");
-                        Debug.LogError("Possible developer error: DVRailDriverMod might not be marked as dependency.");
-                        Debug.LogError("If you're the developer and properly registered the dependency in the info.json file, it might be a mod manager bug");
+                        //This is not supposed to happen
+                        Debug.Print("Expected DVRailDriverMod to be loaded but it's not. Aborting load operation now.");
+                        Debug.Print("Possible developer error: 'AyrA.DVRailDriverMod' might not be marked as dependency.");
+                        Debug.Print("If you're the developer and properly registered the dependency in the info.json file, it might be a mod manager bug");
                         return false;
                     }
                 }
                 else
                 {
-                    Debug.LogWarning("RD adapter already loaded. Resetting instance now.");
+                    Debug.Print("RD adapter already loaded. Resetting instance now.");
                     return OnToggle(modEntry, false) && OnToggle(modEntry, true);
                 }
             }
@@ -78,11 +82,11 @@ namespace TestMod
                 {
                     adapter.RailDriverInputChange -= OnInput;
                     adapter = null;
-                    Debug.Log("RD adapter event unhooked");
+                    Debug.Print("RD adapter event unhooked");
                 }
                 else
                 {
-                    Debug.LogWarning("RD adapter already unloaded. Doing nothing");
+                    Debug.Print("RD adapter already unloaded. Doing nothing");
                 }
             }
             return true;
@@ -136,7 +140,7 @@ namespace TestMod
             }
             b.AuxButtons &= ~AuxButtons.EUp;
             b.AuxButtons &= ~AuxButtons.EDown;
-            //Note: We do not set the e.Handled or e.Cancel property
+            //Note: We do not set the e.Handled or e.Cancel property here.
             //This causes the internal RD mod mechanism to continue working, but with our changed values
         }
     }
