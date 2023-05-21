@@ -6,7 +6,10 @@ Instructions and details can be found in [the help site](https://help.ayra.ch/ra
 There you find documentation about the mod as well as the key map,
 and at the bottom some extra information on the RailDriver device itself.
 
-This readme file here will mostly concern itself with how you extend the mod.
+**The linked documentation is what you want as a user**
+
+This readme file here is intended for developers.
+It explains how you extend the mod.
 
 # Extending the Mod
 
