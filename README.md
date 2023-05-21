@@ -257,29 +257,33 @@ Problematic references are shown with a yellow exclamation mark.
 
 The test mod showcases the most important things you might want to to.
 
-#### Disabling internal functionality
+#### Disabling Internal Functionality
 
 This mod disables the ability to start/stop the engine using the leftmost button
 on the top 14 button row.
 
-#### Adding new button action and updating the display
+#### New Button Action and Display Update
 
 The two leftmost buttons in the bottom 14 button row will display "HELLO"
 on the display, and reset it to the default behavior respectively.
 
-### Changing base mod behavior
+### Changing Base Mod Behavior
 
 The test mod limits the independent brakes power to 50%,
 but still lets the base mod handle the processing of the input
 
-### Partially disabling functionality
+### Partially Disabling Functionality
 
 This disables the emergency brake behavior,
 but leaves the auto brake otherwise intact.
 Moving the auto brake into the "EMG" position
 is just normal full application of the brakes.
 
-### Extending functionality
+### Extending Functionality
 
 This mod maps the "Bell" button to the horn lever.
 Pressing the button will sound the train horn for as long as it's held down.
+
+### Remapping Keys
+
+This mod swaps the "Sand" and "Alert" keys.
